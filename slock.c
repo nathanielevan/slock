@@ -404,6 +404,12 @@ lockscreen(Display *dpy, struct xrandr *rr, int screen)
 	                                &color, &color, 0, 0);
 	XDefineCursor(dpy, lock->win, invisible);
 
+	// sets WM_NAME to "slock"
+	char *window_name = "slock";
+	XTextProperty wmName;
+	XStringListToTextProperty(&window_name, 1, &wmName);
+	XSetWMName(dpy, lock->win, &wmName);
+
 	/* Try to grab mouse pointer *and* keyboard for 600ms, else fail the lock */
 	for (i = 0, ptgrab = kbgrab = -1; i < 6; i++) {
 		if (ptgrab != GrabSuccess) {
