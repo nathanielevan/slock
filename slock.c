@@ -193,7 +193,6 @@ writemessage(Display *dpy, Window win, int screen)
 				j++;
 			}
 
-			// XftTextExtentsUtf8(dpy, fontinfo, (XftChar8 *)(message + j), i - j, &ext_msg);
 			XftDrawStringUtf8(xftdraw, &xftcolor, fontinfo, width + tab_size*tab_replace, height + 20*k, (XftChar8 *)(message + j), i - j);
 			while (i < len && message[i] == '\n') {
 				i++;
