@@ -19,7 +19,7 @@ static const char * message = "Enter password to unlock.";
 static const char * text_color = "#d8dee9";
 
 /* text size (must be a valid size) */
-static const char * font_name = "6x13";
+static const char * font_name = "Iosevka Nerd Font Mono:size:pixelsize=24:antialias=true:autohint=true";
 
 /* time in seconds before the monitor shuts down */
 static const int monitortime = 60;
