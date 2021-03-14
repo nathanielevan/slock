@@ -134,14 +134,6 @@ writemessage(Display *dpy, Window win, int screen)
 	fontinfo = XftFontOpenName(dpy, screen, font_name);
 	XftColorAllocName(dpy, DefaultVisual(dpy, screen), DefaultColormap(dpy, screen), text_color, &xftcolor);
 
-	if (fontinfo == NULL) {
-		if (count_error == 0) {
-			fprintf(stderr, "slock: Unable to load font \"%s\"\n", font_name);
-			count_error++;
-		}
-		return;
-	}
-
 	XftTextExtentsUtf8(dpy, fontinfo, (XftChar8 *) " ", 1, &ext_space);
 	tab_size = 8 * ext_space.width;
 
@@ -456,7 +448,7 @@ lockscreen(Display *dpy, struct xrandr *rr, int screen)
 static void
 usage(void)
 {
-	die("usage: slock [-v] [-f] [-m message] [cmd [arg ...]]\n");
+	die("usage: slock [-v] [-m message] [cmd [arg ...]]\n");
 }
 
 int
