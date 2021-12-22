@@ -48,7 +48,7 @@ struct lock {
 	int screen;
 	Window root, win;
 	Pixmap pmap;
-	unsigned long colors[NUMCOLS];
+	unsigned long colors[NUMCOLS][2];
 };
 
 struct xrandr {
@@ -122,7 +122,7 @@ dontkillme(void)
 #endif
 
 static void
-writemessage(Display *dpy, Window win, int screen)
+writemessage(Display *dpy, Window win, int screen, const char* message, const char* text_color)
 {
 	int len, line_len, width, height, s_width, s_height, i, j, k, tab_replace, tab_size;
 	XftFont *fontinfo;
@@ -288,9 +288,10 @@ readpw(Display *dpy, struct xrandr *rr, struct lock **locks, int nscreens,
 				retval = pam_start(pam_service, hash, &pamc, &pamh);
 				color = PAM;
 				for (screen = 0; screen < nscreens; screen++) {
-					XSetWindowBackground(dpy, locks[screen]->win, locks[screen]->colors[color]);
+					XSetWindowBackground(dpy, locks[screen]->win, locks[screen]->colors[color][0]);
 					XClearWindow(dpy, locks[screen]->win);
 					XRaiseWindow(dpy, locks[screen]->win);
+					writemessage(dpy, locks[screen]->win, screen, pam_message, colorname[color][1]);
 				}
 				XSync(dpy, False);
 
@@ -333,9 +334,9 @@ readpw(Display *dpy, struct xrandr *rr, struct lock **locks, int nscreens,
 				for (screen = 0; screen < nscreens; screen++) {
 					XSetWindowBackground(dpy,
 					                     locks[screen]->win,
-					                     locks[screen]->colors[color]);
+					                     locks[screen]->colors[color][0]);
 					XClearWindow(dpy, locks[screen]->win);
-					writemessage(dpy, locks[screen]->win, screen);
+					writemessage(dpy, locks[screen]->win, screen, default_message, colorname[color][1]);
 				}
 				oldc = color;
 			}
@@ -379,13 +380,13 @@ lockscreen(Display *dpy, struct xrandr *rr, int screen)
 
 	for (i = 0; i < NUMCOLS; i++) {
 		XAllocNamedColor(dpy, DefaultColormap(dpy, lock->screen),
-		                 colorname[i], &color, &dummy);
-		lock->colors[i] = color.pixel;
+		                 colorname[i][0], &color, &dummy);
+		lock->colors[i][0] = color.pixel;
 	}
 
 	/* init */
 	wa.override_redirect = 1;
-	wa.background_pixel = lock->colors[INIT];
+	wa.background_pixel = lock->colors[INIT][0];
 	lock->win = XCreateWindow(dpy, lock->root, 0, 0,
 	                          DisplayWidth(dpy, lock->screen),
 	                          DisplayHeight(dpy, lock->screen),
@@ -469,7 +470,7 @@ main(int argc, char **argv) {
 		fprintf(stderr, "slock-"VERSION"\n");
 		return 0;
 	case 'm':
-		message = EARGF(usage());
+		default_message = EARGF(usage());
 		break;
 	default:
 		usage();
@@ -515,7 +516,7 @@ main(int argc, char **argv) {
 		die("slock: out of memory\n");
 	for (nlocks = 0, s = 0; s < nscreens; s++) {
 		if ((locks[s] = lockscreen(dpy, &rr, s)) != NULL) {
-			writemessage(dpy, locks[s]->win, s);
+			writemessage(dpy, locks[s]->win, s, default_message, colorname[INIT][1]);
 			nlocks++;
 		} else {
 			break;

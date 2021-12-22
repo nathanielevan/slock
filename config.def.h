@@ -2,21 +2,22 @@
 static const char *user  = "nate";
 static const char *group = "users";
 
-static const char *colorname[NUMCOLS] = {
-	[INIT] =   "#0b1726",     /* after initialization */
-	[INPUT] =  "#e9986d",   /* during input */
-	[FAILED] = "#c20f47",   /* wrong password */
-	[PAM] =    "#25a37e",   /* waiting for PAM */
+static const char *colorname[NUMCOLS][2] = {
+	/*     bg         fg       */
+	[INIT] =   { "#0b1726", "#fff6e6" },  /* after initialization */
+	[INPUT] =  { "#e9986d", "#0b1726" },  /* during input */
+	[FAILED] = { "#c20f47", "#fff6e6" },  /* wrong password */
+	[PAM] =    { "#25a37e", "#fff6e6" },  /* waiting for PAM */
 };
 
 /* treat a cleared input like a wrong password (color) */
 static const int failonclear = 1;
 
 /* default message */
-static const char * message = "Enter password to unlock.";
+static const char * default_message = "Enter password to unlock.";
 
-/* text color */
-static const char * text_color = "#fff6e6";
+/* pam message */
+static const char * pam_message = "Authenticating...";
 
 /* text size (must be a valid size) */
 static const char * font_name = "Iosevka Nerd Font Mono:size:pixelsize=24:antialias=true:autohint=true";
