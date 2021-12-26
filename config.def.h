@@ -7,7 +7,7 @@ static const char *colorname[NUMCOLS][2] = {
 	[INIT] =   { "#0b1726", "#fff6e6" },  /* after initialization */
 	[INPUT] =  { "#e9986d", "#0b1726" },  /* during input */
 	[FAILED] = { "#c20f47", "#fff6e6" },  /* wrong password */
-	[PAM] =    { "#25a37e", "#fff6e6" },  /* waiting for PAM */
+	[PAM] =    { "#5d92bf", "#0b1726" },  /* waiting for PAM */
 };
 
 /* treat a cleared input like a wrong password (color) */
