@@ -20,7 +20,7 @@ static const char * default_message = "Enter password to unlock.";
 static const char * pam_message = "Authenticating...";
 
 /* text size (must be a valid size) */
-static const char * font_name = "InconsolataGo Nerd Font Mono:size=20:antialias=true:autohint=true";
+static const char * font_name = "Iosevka Nerd Font Mono:size=21:antialias=true:autohint=true";
 
 /* time in seconds before the monitor shuts down */
 static const int monitortime = 60;
