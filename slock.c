@@ -14,14 +14,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <fontconfig/fontconfig.h>
 #include <X11/extensions/Xrandr.h>
-#include <X11/extensions/Xinerama.h>
 #include <X11/extensions/dpms.h>
 #include <X11/keysym.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/Xft/Xft.h>
 #include <security/pam_appl.h>
 #include <security/pam_misc.h>
 
@@ -32,9 +29,6 @@ char *argv0;
 static int pam_conv(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata_ptr);
 struct pam_conv pamc = {pam_conv, NULL};
 char passwd[256];
-
-/* global count to prevent repeated error messages */
-int count_error = 0;
 
 enum {
 	INIT,
@@ -120,90 +114,6 @@ dontkillme(void)
 	}
 }
 #endif
-
-static void
-writemessage(Display *dpy, Window win, int screen)
-{
-	int len, line_len, width, height, s_width, s_height, i, j, k, tab_replace, tab_size;
-	XftFont *fontinfo;
-	XftColor xftcolor;
-	XftDraw *xftdraw;
-	XGlyphInfo ext_msg, ext_space;
-	XineramaScreenInfo *xsi;
-	xftdraw = XftDrawCreate(dpy, win, DefaultVisual(dpy, screen), DefaultColormap(dpy, screen));
-	fontinfo = XftFontOpenName(dpy, screen, font_name);
-	XftColorAllocName(dpy, DefaultVisual(dpy, screen), DefaultColormap(dpy, screen), text_color, &xftcolor);
-
-	XftTextExtentsUtf8(dpy, fontinfo, (XftChar8 *) " ", 1, &ext_space);
-	tab_size = 8 * ext_space.width;
-
-	/*  To prevent "Uninitialized" warnings. */
-	xsi = NULL;
-
-	/*
-	 * Start formatting and drawing text
-	 */
-
-	len = strlen(message);
-
-	/* Max max line length (cut at '\n') */
-	line_len = 0;
-	k = 0;
-	for (i = j = 0; i < len; i++) {
-		if (message[i] == '\n') {
-			if (i - j > line_len)
-				line_len = i - j;
-			k++;
-			i++;
-			j = i;
-		}
-	}
-	/* If there is only one line */
-	if (line_len == 0)
-		line_len = len;
-
-	if (XineramaIsActive(dpy)) {
-		xsi = XineramaQueryScreens(dpy, &i);
-		s_width = xsi[0].width;
-		s_height = xsi[0].height;
-	} else {
-		s_width = DisplayWidth(dpy, screen);
-		s_height = DisplayHeight(dpy, screen);
-	}
-
-	XftTextExtentsUtf8(dpy, fontinfo, (XftChar8 *)message, line_len, &ext_msg);
-	height = s_height*3/7 - (k*20)/3;
-	width  = (s_width - ext_msg.width)/2;
-
-	/* Look for '\n' and print the text between them. */
-	for (i = j = k = 0; i <= len; i++) {
-		/* i == len is the special case for the last line */
-		if (i == len || message[i] == '\n') {
-			tab_replace = 0;
-			while (message[j] == '\t' && j < i) {
-				tab_replace++;
-				j++;
-			}
-
-			XftDrawStringUtf8(xftdraw, &xftcolor, fontinfo, width + tab_size*tab_replace, height + 20*k, (XftChar8 *)(message + j), i - j);
-			while (i < len && message[i] == '\n') {
-				i++;
-				j = i;
-				k++;
-			}
-		}
-	}
-
-	/* xsi should not be NULL anyway if Xinerama is active, but to be safe */
-	if (XineramaIsActive(dpy) && xsi != NULL)
-			XFree(xsi);
-
-	XftFontClose(dpy, fontinfo);
-	XftColorFree(dpy, DefaultVisual(dpy, screen), DefaultColormap(dpy, screen), &xftcolor);
-	XftDrawDestroy(xftdraw);
-}
-
-
 
 static const char *
 gethash(void)
@@ -335,7 +245,6 @@ readpw(Display *dpy, struct xrandr *rr, struct lock **locks, int nscreens,
 					                     locks[screen]->win,
 					                     locks[screen]->colors[color]);
 					XClearWindow(dpy, locks[screen]->win);
-					writemessage(dpy, locks[screen]->win, screen);
 				}
 				oldc = color;
 			}
@@ -448,7 +357,7 @@ lockscreen(Display *dpy, struct xrandr *rr, int screen)
 static void
 usage(void)
 {
-	die("usage: slock [-v] [-m message] [cmd [arg ...]]\n");
+	die("usage: slock [-v] [cmd [arg ...]]\n");
 }
 
 int
@@ -468,9 +377,6 @@ main(int argc, char **argv) {
 	case 'v':
 		fprintf(stderr, "slock-"VERSION"\n");
 		return 0;
-	case 'm':
-		message = EARGF(usage());
-		break;
 	default:
 		usage();
 	} ARGEND
@@ -514,12 +420,10 @@ main(int argc, char **argv) {
 	if (!(locks = calloc(nscreens, sizeof(struct lock *))))
 		die("slock: out of memory\n");
 	for (nlocks = 0, s = 0; s < nscreens; s++) {
-		if ((locks[s] = lockscreen(dpy, &rr, s)) != NULL) {
-			writemessage(dpy, locks[s]->win, s);
+		if ((locks[s] = lockscreen(dpy, &rr, s)) != NULL)
 			nlocks++;
-		} else {
+		else
 			break;
-		}
 	}
 	XSync(dpy, 0);
 
